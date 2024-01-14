@@ -1,58 +1,616 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>My Portfolio</title>
-  <link rel="stylesheet" href="style.css">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-</head>
-<body>
-<div class="container">
-  <!-- Navbar -->
-  <div class="navbar navbar-expand-lg bg-blue">
-    <div class="container-fluid">
-    <a class="navbar-brand" href="#"> Dev Fausto </a>
-     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="#">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">Features</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">Pricing</a>
-        </li>
-      </ul>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fausto's Portfolio</title>
+    <description> This is Fausto Mbomio's Personal Site showcasing his developement profile.</description>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link href="./style.css" rel="stylesheet">
+  </head>
+  <body>
+    <!--  Nav Bar  -->
+    <nav class="navbar navbar-expand-lg fixed-top text-uppercase">
+      <div class="container">
+        <a class="navbar-brand font-weight-bold" href="#">Dev FAMM</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <div class="navbar-nav ms-auto">
+            
+              <a class="nav-link active px-lg-4 rounded" href="#">Home</a>
+            
+              <a class="nav-link  px-lg-4 rounded" href="#projects">Projects</a>                      
+           
+              <a class="nav-link  px-lg-4 rounded" href="#about">About Me</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!--Main Section-->
+    <div class="main py-5" id="main">
+      <div class="container py-5">
+        <div class="row py-5">
+          <div class="col-lg-6 py-5 mr-auto text-white">
+            <h3><small>Hey there, I'm</small><br>
+              Fausto
+            </h3>
+            <h6 class="text-white">Computer Science | Software Engineering | Data Science</h6>
+            <a  class="bt1 mt-4 align-center p-2"  href="#about"  style="text-decoration: none;">About Me</a>
+          </div>
+        </div>
+      </div>
     </div>
-    <div>
-  </div>
+    <!--Projects Section-->
+    <div class="projects py-5" id ="projects">
+      <div class="container py-5">
+        <h3 class="text-white text-center text-bold"><small>Projects</small></h3>
+        <div class="row py-5">
+          <div class="col-lg-6 py-5 mr-auto text-white">
+            <h6 class="text-white">Sports Betting API Platform</h6>
+            <p>
+              - RESTFul API developed in Python Django-Rest Framework.
+              <br/>
+              - It is an integrated backEnd solution for betting sites.
+              <br/>
+              - Uses third party API calls for odds in games and features, and stores them in a database.
+              <br/>
+              - Sign Ups users at 4 tier levels; customers, employees, agents, and admins.
+              <br/>
+              - Allows users to add bets to their shopping carts and employees would be approving bets after payment.
+            </p>
+            <input type="button" value="Read More" class="bt1 mt-4" onClick="linktogit()">
+            <script>
+              function linktogit(){
+                console.log("Opened the github.");
 
-  <div class="main container">
-  <!-- Home page -->
-  <section id="home">
-    <h1>Hey there, and welcome to my site. It's currently under construction.</h1>
-    <ul>
-      <a href="http://linkedin.com/in/fausto-mbomio-m-94538b270"> Check out my LinkedIn </a>
+const viewCode = `#-------Imports
+from http.client import HTTPResponse
+import json
+from os import execv
+import re
+from turtle import update
+from django.contrib.auth.hashers import make_password, mask_hash, check_password
+from sqlite3 import Date
+from django.shortcuts import render
+from datetime import date, timezone, datetime
+from django.http import HttpResponseRedirect, JsonResponse
+from base.models import *
+from .forms import *
+from rest_framework.renderers import JSONRenderer
+from rest_framework import mixins, status as status_code
+from rest_framework.decorators import APIView
+from rest_framework.response import Response
+from rest_framework import generics
+from .serializers import *
+from .Functions import *
+from django_filters.rest_framework import DjangoFilterBackend
+from django.contrib.auth.models import Group
+from rest_framework.permissions import AllowAny
+from base.permissions import *
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
+from rest_framework.decorators import authentication_classes, permission_classes, api_view
+from django.db.utils import OperationalError
+#----- End Imports.
 
-    </ul>
-  </section>
-  <!-- About page -->
-  <section id="about">
+#GamesListVieset API end Point class
+class GamesList(generics.ListAPIView, generics.RetrieveAPIView, generics.DestroyAPIView):
+    queryset = Game.objects.all()
+    lookup_field='id'
+    filterset_fields = ['league_id', 'status', 'sport', 'date']
+    serializer_class = GameSerializerGet
+    def get(self,request, *args, **kwargs):
+        #get_games()
+        if kwargs.get('id'):
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+#BetList API end point class
+class BetsList(generics.ListAPIView,
+    generics.RetrieveAPIView,
+    generics.CreateAPIView,
+    generics.DestroyAPIView,
+    generics.UpdateAPIView ):
+    queryset=Bet.objects.all()
+    lookup_field="id"
+    filterset_fields=['id', 'user', 'placed_by', 'timestamp',]
+    serializer_class=BetSerializer
+    def get(self, request, *args, **kwargs):
+        self.serializer_class=BetSerializerGet
+        if request.user.type=='client':
+            self.queryset=Bet.objects.filter(user=request.user.id)
+        if kwargs.get('id'):
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+    def post(self, request, *args, **kwargs):
+        if request.data['placed_by']:
+            if request.user.id!=request.data['placed_by']:
+                return Response({"detail":"logged in non client gotta be the bet placer."}, status=status_code.HTTP_400_BAD_REQUEST)
+        if request.data['user'] and request.data['order']:
+            print("passed get user and order")
+            if request.data['user']!=Order.objects.get(id=request.data['order']).user.id:
+                return Response({"detail":"Bettor cannot be different from the one in the order."}, status=status_code.HTTP_400_BAD_REQUEST)
+        if request.data['status']:
+           if request.data['status']!='approved':
+                return Response({"detail":"Cannot place unpaid bets."}, status=status_code.HTTP_400_BAD_REQUEST)
+        try:
+            return self.create(request, args, kwargs)
+        except OperationalError as e:
+            return Response(data={"detail":e.__str__()}, status=status_code.HTTP_400_BAD_REQUEST)
+    def put(self, request, *args, **kwargs):
+        self.serializer_class=BetSerializerPut
+        try:
+            return self.update(request, args, kwargs)
+        except OperationalError as e:
+            return Response(data={"detail":e.__str__()}, status=status_code.HTTP_400_BAD_REQUEST)
+
+#Orders List API end point
+class OrdersList(generics.ListAPIView,
+    generics.RetrieveAPIView,
+    generics.CreateAPIView,
+    generics.DestroyAPIView,
+    generics.UpdateAPIView):
+    queryset=Order.objects.all()
+    lookup_field="id"
+    filterset_fields=['id', 'user',]
+    serializer_class=OrderSerializer
+    def post_pick(self, request, pick):
+        url = "localhost/api/picks/"
+        if pick['user']:
+            querystring=pick
+        else:
+            querystring = pick |{'user':request.user.id}
+        headers = {
+            "Authorization":"Token "+str(request.auth.key),
+            "Content-Type": "application/json"
+        }
+        response = requests.request("POST", url, headers=headers, json=querystring)
+        return response
+    def get(self, request, *args, **kwargs):
+        self.serializer_class=OrderSerializerGet
+        if request.user.type =='client':
+            self.queryset=Order.objects.filter(user=request.user.id)
+        if kwargs.get('id'):
+            print(self.get_object().get_estpayout())
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+    def post(self, request, *args, **kwargs):
+        if request.user.type=='client':
+            if request.data['user']:
+                if request.data['user']!=request.user.id:
+                    return Response(data={"detail":"You are only authorized to create your own order"}, status=status_code.HTTP_401_UNAUTHORIZED)
+        order={}
+        try:
+            order=self.create(request, args, kwargs)
+        except OperationalError as e:
+            return Response(data={"detail":e.__str__()}, status=status_code.HTTP_400_BAD_REQUEST)
+        if order.data["id"]:
+            valid=True
+            for pick in request.data['picks']:
+                orde={'order':order.data["id"]}
+                r=pick|orde
+                try:
+                    ponse=self.post_pick(request, r)
+                    if ponse.status_code!=201:
+                        valid=False
+                except:
+                    valid=False
+                    print(ponse.content)
+            createdorder=Order.objects.get(id=order.data['id'])
+            if valid:
+                createdorder.validby=createdorder.get_validby()
+                createdorder.quantity=createdorder.get_quantity()
+                createdorder.save()
+                order.data['validby']=createdorder.validby
+            else:
+                createdorder.delete()
+                return Response(data={"detail":"Error creating picks for this order"}, status=status_code.HTTP_400_BAD_REQUEST)
+        return order
+    def put(self, request, *args, **kwargs):
+        self.serializer_class=OrderSerializerPut
+        order=self.get_object()
+        order.validby=order.get_validby()
+        order.save()
+        if order.validby:
+            if order.status!='pending' or (datetime.fromisoformat(str(order.validby)) <= timezone.now()):
+                return Response(data={"detail": "You can no longer edit the order."}, status=status_code.HTTP_400_BAD_REQUEST)
+        try:
+            order=self.update(request, args, kwargs)
+        except OperationalError as e:
+            return Response(data={"detail":e.__str__()}, status=status_code.HTTP_400_BAD_REQUEST)
+        if order.data["id"]:
+            valid=True
+            for pick in request.data['picks']:
+                orde={'order':order.data["id"]}
+                r=pick|orde
+                try:
+                    ponse=self.post_pick(request, r)
+                    if ponse.status_code!=201:
+                        valid=False
+                except OperationalError as e:
+                    createdorder=Order.objects.get(id=order.data['id'])
+                    createdorder.validby=createdorder.get_validby()
+                    createdorder.save()
+                    return Response(data={"detail":e.__str__()}, status=status_code.HTTP_400_BAD_REQUEST)
+                except:
+                    createdorder=Order.objects.get(id=order.data['id'])
+                    createdorder.validby=createdorder.get_validby()
+                    createdorder.save()                
+                    return Response(data={"detail":"Error creating picks for this order"}, status = status_code.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            if valid:
+                createdorder=Order.objects.get(id=order.data['id'])
+                createdorder.validby=createdorder.get_validby()
+                createdorder.save()
+                order.data['validby']=createdorder.validby
+            else:
+                return Response(data={"detail":"Error creating picks for this order"}, status = status_code.HTTP_500_INTERNAL_SERVER_ERROR)
+        return order
+#Users List API end point class
+class UsersList(
+    generics.ListAPIView,
+    generics.RetrieveAPIView,
+    generics.CreateAPIView,
+    generics.DestroyAPIView,
+    generics.UpdateAPIView):
+    queryset=User.objects.all()
+    lookup_field="id"
+    filterset_fields=['id', 'username', 'type', 'fname','lname', 'dob', 'join_date',]
+    serializer_class=UserSerializer
+    permission_classes=[AllowAny,]
+    authentication_classes=[]
+    def get(self, request, *args, **kwargs):
+        ''''''
+        self.authentication_classes=[SessionAuthentication, TokenAuthentication,]
+        self.get_authenticate_header(request)
+        #self.perform_authentication(request)
+        self.request
+        self.initial(request, args, kwargs)
+        mytple=TokenAuthentication().authenticate(request)
+        
+        print('Printing mytuple', mytple)
+        if mytple:
+            setattr(request, 'user', mytple[0])
+            setattr(request, 'auth', mytple[1])
+        else:
+            user=SessionAuthentication().authenticate(request)
+            print(user)
+            if user:
+                setattr(request, 'user', user[0])        
+        print(request.user.username)
+        print('Printing auth', request.auth)
+        auth=CustomDjangoModelPermissions()
+        if not auth.has_permission(request, self):
+            return Response({"detail":"You are not authorized to perform this request"})
+        print(request.user.username)
+        print(request.auth)
+        if is_in_group(request.user, 'clientes'):
+            if kwargs.get('id'):
+                print (kwargs)
+                print (args)    
+                if request.user.id==kwargs['id']:
+                    return self.retrieve(request, args, kwargs)
+                return Response({'detail': "You are not authorized to view this profile"})
+            self.queryset=User.objects.filter(id=request.user.id)
+            return self.list(self, request, args, kwargs)
+        if is_in_group(request.user, 'empleados') |is_in_group(request.user, 'agentes'):
+            if kwargs.get('id'):
+                if request.user.id==kwargs['id']:                
+                    return self.retrieve(request, args, kwargs)
+                self.serializer_class=UserSerializerOverview
+                return self.retrieve(request, args, kwargs)
+            self.serializer_class=UserSerializerOverview
+            return self.list(request, args, kwargs)
+        if kwargs.get('id'):
+                return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+    def post(self, request, *args, **kwargs):
+        self.authentication_classes=[TokenAuthentication, SessionAuthentication,]
+        try:
+            mytple=TokenAuthentication().authenticate(request)
+            if mytple:
+                setattr(request, 'user', mytple[0])
+                setattr(request, 'auth', mytple[1])
+            else:
+                myuser=SessionAuthentication().authenticate(request)
+                if myuser:
+                    setattr(request, 'user', myuser)
+        except:
+            pass
+        if request.user.is_authenticated:
+            if request.user.type=='client':
+                return Response(data={'detail':'You cannot create somebody else account'}, status=status_code.HTTP_401_UNAUTHORIZED)
+            if request.user.type=='employee' or request.user.type=='agent':
+                self.serializer_class=UserSerializerPostEmployee
+                return self.create(request, args, kwargs)
+            if request.user.type=='admin' and not request.user.is_superuser:
+                self.serializer_class=UserSerializerPostAdmin
+                return self.create(request,  args, kwargs)
+            return self.create(request, args, kwargs)
+        self.serializer_class=UserSerializerSignUp
+        return self.create(request, args, kwargs)
     
-  </section>
+    def put(self, request, *args, **kwargs):
+        self.authentication_classes=[TokenAuthentication, SessionAuthentication,]
+        mytple=TokenAuthentication().authenticate(request)
+        if mytple:
+            setattr(request, 'user', mytple[0])
+            setattr(request, 'auth', mytple[1])
+        else:
+            myuser=SessionAuthentication().authenticate(request)
+            if myuser:
+                setattr(request, 'user', myuser)
+        if not request.user.is_authenticated:
+            return Response({"detail":"Not authenticaded request!"}, status=status_code.HTTP_401_UNAUTHORIZED)
+        if request.user.id==kwargs['id']:
+            if request.user.type=='client':
+                self.serializer_class=UserSerializerPutClient
+            elif request.user.type=='employee' or request.user.type=='agent':
+                self.serializer_class=UserSerializerPutEmployee
+            elif request.user.type=='admin' and not request.user.is_superuser:
+                self.serializer_class=UserSerializerPostAdmin       
+            return self.update(request, args, kwargs)
+        print(request.user.username)
+        auth=CustomDjangoModelPermissions()
+        if not auth.has_permission(request, self):
+            return Response({"detail":"You are not authorized to perform this request"}, status_code.HTTP_403_FORBIDDEN)
+        else:
+            user=self.get_object()
+            if user.is_superuser:
+                if request.user.is_superuser:
+                    return self.update(request, args, kwargs)
+                else:
+                    return Response({"detail":"You cannot alter this user."}, status_code.HTTP_403_FORBIDDEN)
+            elif is_in_group(request.user, 'empleados'):
+                if user.is_admin:
+                    return Response({"detail":"You cannot alter this user."}, status_code.HTTP_403_FORBIDDEN) 
+                else:
+                    self.serializer_class=UserSerializerPutEmployee
+                    return self.update(request, args, kwargs)
+            else:
+                return self.update(request, args, kwargs)
+    def delete(self, request, *args, **kwargs):
+        self.authentication_classes=[TokenAuthentication, SessionAuthentication,]
+        mytple=TokenAuthentication().authenticate(request)
+        if mytple:
+            setattr(request, 'user', mytple[0])
+            setattr(request, 'auth', mytple[1])
+        else:
+            myuser=SessionAuthentication().authenticate(request)
+            if myuser:
+                setattr(request, 'user', myuser)
+        auth=CustomDjangoModelPermissions()
+        if not auth.has_permission(request, self):
+            return Response({"detail":"You do not have the required permissions to perform this action!"}, status=status_code.HTTP_401_UNAUTHORIZED)
+        user=self.get_object()
+        if user.is_superuser:
+            return Response(data={'detail':'Cannot delete a superuser!'}, status=status_code.HTTP_401_UNAUTHORIZED)
+        return self.destroy(request, *args, **kwargs)    
 
-  <!-- Projects page -->
-  <section id="projects">
-  </section>
-  </div>
-<!--Footer-->
-  <footer>
-    <p>Copyright &copy; 2023, 12 Quality &trade;.</p>
-  </footer>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-</body>
+#Sports List API end point class
+class SportsList(
+    generics.ListAPIView,
+    generics.RetrieveAPIView,
+    ):
+    queryset = Sport.objects.all()
+    lookup_field='id'
+    filterset_fields = ['id', 'name']
+    serializer_class = SportSerializer
+    def get(self,request, *args, **kwargs):
+        if kwargs.get('id'):
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+
+#Employee List API end point class.
+class EmployeesList(generics.ListAPIView,
+    generics.RetrieveAPIView,
+    generics.CreateAPIView,
+    generics.DestroyAPIView,
+    generics.UpdateAPIView):
+    queryset=Employee.objects.all()
+    lookup_field="id"
+    filterset_fields=['id', 'user', 'location']
+    serializer_class=EmployeeSerializer
+    def get(self, request, *args, **kwargs):
+        if request.user.type=='employee':
+            self.serializer_class=EmployeeSerializerOn
+            if kwargs.get('id'):
+                if request.user.id==self.get_object().user.id:   
+                    self.serializer_class=EmployeeSerializerGet
+                return self.retrieve(request, args, kwargs)
+            return self.list(request, args, kwargs)
+        
+        self.serializer_class=EmployeeSerializerGet
+        if kwargs.get('id'):
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+
+#Agents List API end point class
+class AgentsList(generics.ListAPIView,
+    generics.RetrieveAPIView,
+    generics.CreateAPIView,
+    generics.DestroyAPIView,
+    generics.UpdateAPIView):
+    queryset=Agent.objects.all()
+    lookup_field="id"
+    filterset_fields=['id', 'user']
+    serializer_class=AgentSerializerCreationAdmin
+    def get(self, request, *args, **kwargs):
+        if request.user.is_admin==False:
+            self.serializer_class=AgentSerializerGetPublic
+        else:
+            self.serializer_class=AgentSerializerGetAdmin
+        if kwargs.get('id'):
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+    def post(self, request, *args, **kwargs):
+        try:
+            user=User.objects.get(id=request.data['user'])
+            if user.type!='agent' or user.type!='client':
+                return Response(data={'detail':'Invalid user chosen, users cannot be admin or staff members'}, status=status_code.HTTP_400_BAD_REQUEST)
+        except:
+            pass
+        if request.user.is_admin==False:
+            self.serializer_class=AgentSerializerCreationStaff
+        return self.create(request, args, kwargs)
+
+#Picks List API end Point.
+class PicksList(generics.ListAPIView,
+    generics.RetrieveAPIView,
+    generics.CreateAPIView,
+    generics.DestroyAPIView,
+    generics.UpdateAPIView):
+    #self.queryset=User.objects.filter(id=request.user.id)
+    queryset=Pick.objects.all()
+    lookup_field="id"
+    filterset_fields=['id', 'user', 'order', 'game', 'sport', 'bet_type']
+    serializer_class=PickSerializer
+    def get(self, request, *args, **kwargs):
+        if kwargs.get('id'):
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+    def post(self, request, *args, **kwargs):
+        self.serializer_class=PickSerializerPost
+        if request.data['user'] and request.data['order']:
+            try:
+                if request.data['user']!=Order.objects.get(id=request.data['order']).user.id:
+                    return Response(data={"detail":"Cannot create a pick for an order associated to another user"}, status=status_code.HTTP_400_BAD_REQUEST)
+            except:
+                    return Response(data={"detail":"Cannot find the order"}, status=status_code.HTTP_400_BAD_REQUEST)
+        return self.create(request, args, kwargs)
+    def put(self, request, *args, **kwargs):
+        self.serializer_class=PickSerializerPut
+        return self.update(request, args, kwargs)
+
+#Location List API end point class
+class LocationsList(generics.ListAPIView,
+    generics.RetrieveAPIView,
+    generics.CreateAPIView,
+    generics.DestroyAPIView,
+    generics.UpdateAPIView):
+    queryset=Location.objects.all()
+    lookup_field="id"
+    filterset_fields=['id', 'name', 'city']
+    serializer_class=LocationSerializer
+    def get(self, request, *args, **kwargs):#Admin is reserved all the permissions
+        if request.user.type!='admin':
+            self.serializer_class=LocationSerializerClients
+            if kwargs.get('id'):
+                return self.retrieve(request, args, kwargs)
+            return Response(data=list(self.get_queryset().values('id', 'name', 'street', 'city', 'country', 'phone')), status=status_code.HTTP_200_OK)
+        else:
+            self.serializer_class=LocationSerializerGetAdmin
+            if kwargs.get('id'):
+                return self.retrieve(request, args, kwargs)
+            return self.list(request, args, kwargs)
+
+#Bet Transactions loggs API end Point (List and Retrieve only)
+class BetTransactionList(generics.ListAPIView, generics.RetrieveAPIView):
+    serializer_class=BetTransactionSerializerGet
+    queryset=BetTransaction.objects.all()
+    lookup_field='id'
+    def get(self, request, *args, **kwargs):
+        if 'id' in kwargs:
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+	    
+#Agencies Credit API end point class (List Retrieve and creation by admin only)
+class CreditLocationList(generics.ListAPIView, generics.RetrieveAPIView, generics.CreateAPIView):
+    serializer_class=CreditLocationSerializerGet
+    queryset=CreditLocation.objects.all()
+    lookup_field='id'
+    def get(self, request, *args, **kwargs):
+        if 'id' in kwargs:
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+    `;
+    open(viewCode)
+    console.log(viewCode);
+              }
+            </script>
+          </div>
+          <div class="col-lg-6 py-5 mr-auto text-white">
+            <h6 class="text-white">Library Database Site</h6>
+            <p>
+              - Team Project developed in C# in the backend and Azure SQL server for database.
+              <br/>
+              - Website functional of a Library where members can sign up and borrow a variaty of items.
+              <br/>w3
+              - Designed with three level role base access to the site, for guests, members, and employees (Librarians and Staff).
+              <br/>
+              - Query the database for reports in of items borrowed, within them, books laptops, DVDs,...
+              <br/>
+              - Implement Business logic through Triggers and stored procedures that fines members after overdue, and alerts about low stock.
+            </p>
+            <input type="button" value="Read More" class="bt1 mt-4">
+          </div>
+
+          <div class="col-lg-6 py-5 mr-auto text-white">
+            <h6 class="text-white">MINI-PYTHON Compiler</h6>
+            <p>
+              - C/C++ Program to compile Python code.
+              <br/>
+              - Structured to for functionlality in the same Python compiler workflow.
+              <br/>
+              - Supports strings, numbers, and list data types.
+              <br/>
+              - Handles while looping, conditional control statements, and function calls.
+              <br/>
+              - As part of the performance, the program overcomes the 1000 recursion depth by iterative evaluation. 
+            </p>
+            <input type="button" value="Read More" class="bt1 mt-4">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!--About Me Section-->
+    <div class="about py-5" id ="about">
+      <div class="container py-5">
+        <h3 class="text-white text-center text-bold"><small>About Me</small></h3>
+        <div class="row py-5">
+          <div class="col-lg-6 py-5 mr-auto text-white">
+            <h6 class="text-white">Education:</h6>
+            <p>
+              - Bachelor of Science in Computer Science
+              <br/> 
+                 @ University of Houston in Houston, Texas, USA | December 2023.
+              <br/>
+              - Associate of Science in Computer Science
+              <br/>
+                 @ Houston Community College in Houston, Texas, USA| December 2021.
+            </p>
+          </div>
+          <div class="col-lg-6 py-5 mr-auto text-white">
+            <h6 class="text-white">Hobies</h6>
+            <p>
+              - Learning is my most important hobby, as it is included in all my other hobies directly or indirectly.
+              <br/>
+              - Reading in general is my most concise hobby, and particularly reading about psycological and ethical topics.
+              <br/>
+              - My second most important hobby is exercising, I am always amazed by how much better I can do in my life after exercising.
+              <br/>
+              - To keep myself fresh in the computer science domain, I am constantly leetcoding, trying to master the art of problem solving.
+              <br/>
+              - Writing comes as a given when I constantly express myself in a way that resonates both for me and the audience.
+            </p>
+          </div>
+          
+          <div class="col-lg-6 py-5 mr-auto text-white">
+            <h6 class="text-white">CONTACT INFO</h6>
+            <p>
+              -<a href="https://www.linkedind.com/in/fausto-mbomio" class="text-white" target="_blank" rel="noopener noreferrer"> Check Out my LinkedIn (Opens in a new Tab)</a>.
+              <br/>
+              -<a href="https://www.GitHub.com/devfamm" class="text-white" target="_blank" rel="noopener noreferrer"> Check Out my GitHub (Opens in a new Tab)</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer class="footer">
+      <div class="text-bold text-center align-center p-5 text-white"> &copy;2023-2024 , Powered with &hearts; by 12 Quality&trade;. All rights reserved!</div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+  </body>
 </html>

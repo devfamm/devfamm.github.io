@@ -1,45 +1,145 @@
-body {
-      background-color: white;
-      font-family: sans-serif;
-    }
-    
-    nav {
-      background-color: white;
-      height: 50px;
-      width: 100%;
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 100;
-    }
-    
-    nav a {
-      color: black;
-      text-decoration: none;
-      font-size: 20px;
-      padding: 10px;
-    }
-    
-    nav a:hover {
-      background-color: #333;
-    }
-    
-    .section {
-      padding: 20px;
-    }
-    
-    .footer {
-      background-color: white;
-      height: 50px;
-      width: 100%;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      z-index: 100;
-    }
-    
-    .footer p {
-      color: black;
-      font-size: 16px;
-      text-align: center;
-    }
+*{
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+.navbar{
+  background-color: white;
+}
+.nav-link{
+  color: black;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+}
+.nav-link:hover{
+  color: white!important;
+  background-color: black!important;
+}
+.navbar-brand{
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: black;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+/* Main Section*/
+.main{
+  background: url(./images/main-1.jpg)no-repeat;
+  background-size: cover;
+  width: 100%;
+  height: 100vh;
+}
+.main h3{
+  font-size: 4.4rem;
+  font-weight: 700;
+}
+.main h6{
+  font-size: 1.4rem;
+  text-transform: uppercase;
+  line-height: 1;
+  width: 40%;;
+}
+.main h3 small{
+  font-size: 3rem;
+}
+.main .bt1{
+  height: 55px;
+  width: 138px;
+  background-color: rgb(233, 20, 109);
+  color: white;
+  outline: none;
+  border: none;
+  font-weight: bold;
+  border-radius: 5px;
+}
+.main .bt1:hover{
+  background-color: white;
+  color: rgb(233, 20, 109);
+  transition: 0.5s;
+}
+
+/*-------------  Projects Section  ------------*/
+.projects{
+  background: blueviolet;
+  background-size: cover;
+  width: 100%;
+
+}
+.projects h3{
+  font-size: 4.4rem;
+  font-weight: 700;
+}
+.projects h6{
+  font-size: 1.4rem;
+  text-transform: uppercase;
+  line-height: 1;
+  width: 40%;;
+}
+.projects h3 small{
+  font-size: 3rem;
+}
+.projects .bt1{
+  height: 55px;
+  width: 138px;
+  background-color: rgb(233, 20, 109);
+  outline: none;
+  border: none;
+  font-weight: bold;
+  border-radius: 5px;
+}
+.projects .bt1:hover{
+  background-color: white;
+  color: rgb(233, 20, 109);
+  transition: 0.5s;
+}
+
+/*-------------  About Me Section  ------------*/
+.about{
+  background: #0066ff ;
+  background-size: cover;
+  width: 100%;
+  background-image: linear-gradient(to bottom, #0066ff, gray);
+
+}
+.about h3{
+  font-size: 4.4rem;
+  font-weight: 700;
+}
+.about h6{
+  font-size: 1.4rem;
+  text-transform: uppercase;
+  line-height: 1;
+  width: 40%;;
+}
+.about h3 small{
+  font-size: 3rem;
+}
+.about .bt1{
+  height: 55px;
+  width: 138px;
+  background-color: rgb(233, 20, 109);
+  outline: none;
+  border: none;
+  font-weight: bold;
+  border-radius: 5px;
+}
+.about .bt1:hover{
+  background-color: white;
+  color: rgb(233, 20, 109);
+  transition: 0.5s;
+}
+.about a{
+  text-decoration: none;
+}
+.about a:hover{
+  color:black!important;
+  font-size: 115%;
+}
+
+/* Copyright Section.*/
+.footer{
+  background-color: gray;
+}
