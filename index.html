@@ -61,7 +61,469 @@
               <br/>
               - Allows users to add bets to their shopping carts and employees would be approving bets after payment.
             </p>
-            <input type="button" value="Read More" class="bt1 mt-4" onClick="linktogit()">
+            <input type="button" value="Read More" class="bt1 mt-4" data-bs-toggle="modal" data-bs-target="#code1">
+		<div class="modal-fullscreen" id="code1">
+#-------Imports
+from http.client import HTTPResponse
+import json
+from os import execv
+import re
+from turtle import update
+from django.contrib.auth.hashers import make_password, mask_hash, check_password
+from sqlite3 import Date
+from django.shortcuts import render
+from datetime import date, timezone, datetime
+from django.http import HttpResponseRedirect, JsonResponse
+from base.models import *
+from .forms import *
+from rest_framework.renderers import JSONRenderer
+from rest_framework import mixins, status as status_code
+from rest_framework.decorators import APIView
+from rest_framework.response import Response
+from rest_framework import generics
+from .serializers import *
+from .Functions import *
+from django_filters.rest_framework import DjangoFilterBackend
+from django.contrib.auth.models import Group
+from rest_framework.permissions import AllowAny
+from base.permissions import *
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
+from rest_framework.decorators import authentication_classes, permission_classes, api_view
+from django.db.utils import OperationalError
+#----- End Imports.
+
+#GamesListVieset API end Point class
+class GamesList(generics.ListAPIView, generics.RetrieveAPIView, generics.DestroyAPIView):
+    queryset = Game.objects.all()
+    lookup_field='id'
+    filterset_fields = ['league_id', 'status', 'sport', 'date']
+    serializer_class = GameSerializerGet
+    def get(self,request, *args, **kwargs):
+        #get_games()
+        if kwargs.get('id'):
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+#BetList API end point class
+class BetsList(generics.ListAPIView,
+    generics.RetrieveAPIView,
+    generics.CreateAPIView,
+    generics.DestroyAPIView,
+    generics.UpdateAPIView ):
+    queryset=Bet.objects.all()
+    lookup_field="id"
+    filterset_fields=['id', 'user', 'placed_by', 'timestamp',]
+    serializer_class=BetSerializer
+    def get(self, request, *args, **kwargs):
+        self.serializer_class=BetSerializerGet
+        if request.user.type=='client':
+            self.queryset=Bet.objects.filter(user=request.user.id)
+        if kwargs.get('id'):
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+    def post(self, request, *args, **kwargs):
+        if request.data['placed_by']:
+            if request.user.id!=request.data['placed_by']:
+                return Response({"detail":"logged in non client gotta be the bet placer."}, status=status_code.HTTP_400_BAD_REQUEST)
+        if request.data['user'] and request.data['order']:
+            print("passed get user and order")
+            if request.data['user']!=Order.objects.get(id=request.data['order']).user.id:
+                return Response({"detail":"Bettor cannot be different from the one in the order."}, status=status_code.HTTP_400_BAD_REQUEST)
+        if request.data['status']:
+           if request.data['status']!='approved':
+                return Response({"detail":"Cannot place unpaid bets."}, status=status_code.HTTP_400_BAD_REQUEST)
+        try:
+            return self.create(request, args, kwargs)
+        except OperationalError as e:
+            return Response(data={"detail":e.__str__()}, status=status_code.HTTP_400_BAD_REQUEST)
+    def put(self, request, *args, **kwargs):
+        self.serializer_class=BetSerializerPut
+        try:
+            return self.update(request, args, kwargs)
+        except OperationalError as e:
+            return Response(data={"detail":e.__str__()}, status=status_code.HTTP_400_BAD_REQUEST)
+
+#Orders List API end point
+class OrdersList(generics.ListAPIView,
+    generics.RetrieveAPIView,
+    generics.CreateAPIView,
+    generics.DestroyAPIView,
+    generics.UpdateAPIView):
+    queryset=Order.objects.all()
+    lookup_field="id"
+    filterset_fields=['id', 'user',]
+    serializer_class=OrderSerializer
+    def post_pick(self, request, pick):
+        url = "localhost/api/picks/"
+        if pick['user']:
+            querystring=pick
+        else:
+            querystring = pick |{'user':request.user.id}
+        headers = {
+            "Authorization":"Token "+str(request.auth.key),
+            "Content-Type": "application/json"
+        }
+        response = requests.request("POST", url, headers=headers, json=querystring)
+        return response
+    def get(self, request, *args, **kwargs):
+        self.serializer_class=OrderSerializerGet
+        if request.user.type =='client':
+            self.queryset=Order.objects.filter(user=request.user.id)
+        if kwargs.get('id'):
+            print(self.get_object().get_estpayout())
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+    def post(self, request, *args, **kwargs):
+        if request.user.type=='client':
+            if request.data['user']:
+                if request.data['user']!=request.user.id:
+                    return Response(data={"detail":"You are only authorized to create your own order"}, status=status_code.HTTP_401_UNAUTHORIZED)
+        order={}
+        try:
+            order=self.create(request, args, kwargs)
+        except OperationalError as e:
+            return Response(data={"detail":e.__str__()}, status=status_code.HTTP_400_BAD_REQUEST)
+        if order.data["id"]:
+            valid=True
+            for pick in request.data['picks']:
+                orde={'order':order.data["id"]}
+                r=pick|orde
+                try:
+                    ponse=self.post_pick(request, r)
+                    if ponse.status_code!=201:
+                        valid=False
+                except:
+                    valid=False
+                    print(ponse.content)
+            createdorder=Order.objects.get(id=order.data['id'])
+            if valid:
+                createdorder.validby=createdorder.get_validby()
+                createdorder.quantity=createdorder.get_quantity()
+                createdorder.save()
+                order.data['validby']=createdorder.validby
+            else:
+                createdorder.delete()
+                return Response(data={"detail":"Error creating picks for this order"}, status=status_code.HTTP_400_BAD_REQUEST)
+        return order
+    def put(self, request, *args, **kwargs):
+        self.serializer_class=OrderSerializerPut
+        order=self.get_object()
+        order.validby=order.get_validby()
+        order.save()
+        if order.validby:
+            if order.status!='pending' or (datetime.fromisoformat(str(order.validby)) <= timezone.now()):
+                return Response(data={"detail": "You can no longer edit the order."}, status=status_code.HTTP_400_BAD_REQUEST)
+        try:
+            order=self.update(request, args, kwargs)
+        except OperationalError as e:
+            return Response(data={"detail":e.__str__()}, status=status_code.HTTP_400_BAD_REQUEST)
+        if order.data["id"]:
+            valid=True
+            for pick in request.data['picks']:
+                orde={'order':order.data["id"]}
+                r=pick|orde
+                try:
+                    ponse=self.post_pick(request, r)
+                    if ponse.status_code!=201:
+                        valid=False
+                except OperationalError as e:
+                    createdorder=Order.objects.get(id=order.data['id'])
+                    createdorder.validby=createdorder.get_validby()
+                    createdorder.save()
+                    return Response(data={"detail":e.__str__()}, status=status_code.HTTP_400_BAD_REQUEST)
+                except:
+                    createdorder=Order.objects.get(id=order.data['id'])
+                    createdorder.validby=createdorder.get_validby()
+                    createdorder.save()                
+                    return Response(data={"detail":"Error creating picks for this order"}, status = status_code.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            if valid:
+                createdorder=Order.objects.get(id=order.data['id'])
+                createdorder.validby=createdorder.get_validby()
+                createdorder.save()
+                order.data['validby']=createdorder.validby
+            else:
+                return Response(data={"detail":"Error creating picks for this order"}, status = status_code.HTTP_500_INTERNAL_SERVER_ERROR)
+        return order
+#Users List API end point class
+class UsersList(
+    generics.ListAPIView,
+    generics.RetrieveAPIView,
+    generics.CreateAPIView,
+    generics.DestroyAPIView,
+    generics.UpdateAPIView):
+    queryset=User.objects.all()
+    lookup_field="id"
+    filterset_fields=['id', 'username', 'type', 'fname','lname', 'dob', 'join_date',]
+    serializer_class=UserSerializer
+    permission_classes=[AllowAny,]
+    authentication_classes=[]
+    def get(self, request, *args, **kwargs):
+        ''''''
+        self.authentication_classes=[SessionAuthentication, TokenAuthentication,]
+        self.get_authenticate_header(request)
+        #self.perform_authentication(request)
+        self.request
+        self.initial(request, args, kwargs)
+        mytple=TokenAuthentication().authenticate(request)
+        
+        print('Printing mytuple', mytple)
+        if mytple:
+            setattr(request, 'user', mytple[0])
+            setattr(request, 'auth', mytple[1])
+        else:
+            user=SessionAuthentication().authenticate(request)
+            print(user)
+            if user:
+                setattr(request, 'user', user[0])        
+        print(request.user.username)
+        print('Printing auth', request.auth)
+        auth=CustomDjangoModelPermissions()
+        if not auth.has_permission(request, self):
+            return Response({"detail":"You are not authorized to perform this request"})
+        print(request.user.username)
+        print(request.auth)
+        if is_in_group(request.user, 'clientes'):
+            if kwargs.get('id'):
+                print (kwargs)
+                print (args)    
+                if request.user.id==kwargs['id']:
+                    return self.retrieve(request, args, kwargs)
+                return Response({'detail': "You are not authorized to view this profile"})
+            self.queryset=User.objects.filter(id=request.user.id)
+            return self.list(self, request, args, kwargs)
+        if is_in_group(request.user, 'empleados') |is_in_group(request.user, 'agentes'):
+            if kwargs.get('id'):
+                if request.user.id==kwargs['id']:                
+                    return self.retrieve(request, args, kwargs)
+                self.serializer_class=UserSerializerOverview
+                return self.retrieve(request, args, kwargs)
+            self.serializer_class=UserSerializerOverview
+            return self.list(request, args, kwargs)
+        if kwargs.get('id'):
+                return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+    def post(self, request, *args, **kwargs):
+        self.authentication_classes=[TokenAuthentication, SessionAuthentication,]
+        try:
+            mytple=TokenAuthentication().authenticate(request)
+            if mytple:
+                setattr(request, 'user', mytple[0])
+                setattr(request, 'auth', mytple[1])
+            else:
+                myuser=SessionAuthentication().authenticate(request)
+                if myuser:
+                    setattr(request, 'user', myuser)
+        except:
+            pass
+        if request.user.is_authenticated:
+            if request.user.type=='client':
+                return Response(data={'detail':'You cannot create somebody else account'}, status=status_code.HTTP_401_UNAUTHORIZED)
+            if request.user.type=='employee' or request.user.type=='agent':
+                self.serializer_class=UserSerializerPostEmployee
+                return self.create(request, args, kwargs)
+            if request.user.type=='admin' and not request.user.is_superuser:
+                self.serializer_class=UserSerializerPostAdmin
+                return self.create(request,  args, kwargs)
+            return self.create(request, args, kwargs)
+        self.serializer_class=UserSerializerSignUp
+        return self.create(request, args, kwargs)
+    
+    def put(self, request, *args, **kwargs):
+        self.authentication_classes=[TokenAuthentication, SessionAuthentication,]
+        mytple=TokenAuthentication().authenticate(request)
+        if mytple:
+            setattr(request, 'user', mytple[0])
+            setattr(request, 'auth', mytple[1])
+        else:
+            myuser=SessionAuthentication().authenticate(request)
+            if myuser:
+                setattr(request, 'user', myuser)
+        if not request.user.is_authenticated:
+            return Response({"detail":"Not authenticaded request!"}, status=status_code.HTTP_401_UNAUTHORIZED)
+        if request.user.id==kwargs['id']:
+            if request.user.type=='client':
+                self.serializer_class=UserSerializerPutClient
+            elif request.user.type=='employee' or request.user.type=='agent':
+                self.serializer_class=UserSerializerPutEmployee
+            elif request.user.type=='admin' and not request.user.is_superuser:
+                self.serializer_class=UserSerializerPostAdmin       
+            return self.update(request, args, kwargs)
+        print(request.user.username)
+        auth=CustomDjangoModelPermissions()
+        if not auth.has_permission(request, self):
+            return Response({"detail":"You are not authorized to perform this request"}, status_code.HTTP_403_FORBIDDEN)
+        else:
+            user=self.get_object()
+            if user.is_superuser:
+                if request.user.is_superuser:
+                    return self.update(request, args, kwargs)
+                else:
+                    return Response({"detail":"You cannot alter this user."}, status_code.HTTP_403_FORBIDDEN)
+            elif is_in_group(request.user, 'empleados'):
+                if user.is_admin:
+                    return Response({"detail":"You cannot alter this user."}, status_code.HTTP_403_FORBIDDEN) 
+                else:
+                    self.serializer_class=UserSerializerPutEmployee
+                    return self.update(request, args, kwargs)
+            else:
+                return self.update(request, args, kwargs)
+    def delete(self, request, *args, **kwargs):
+        self.authentication_classes=[TokenAuthentication, SessionAuthentication,]
+        mytple=TokenAuthentication().authenticate(request)
+        if mytple:
+            setattr(request, 'user', mytple[0])
+            setattr(request, 'auth', mytple[1])
+        else:
+            myuser=SessionAuthentication().authenticate(request)
+            if myuser:
+                setattr(request, 'user', myuser)
+        auth=CustomDjangoModelPermissions()
+        if not auth.has_permission(request, self):
+            return Response({"detail":"You do not have the required permissions to perform this action!"}, status=status_code.HTTP_401_UNAUTHORIZED)
+        user=self.get_object()
+        if user.is_superuser:
+            return Response(data={'detail':'Cannot delete a superuser!'}, status=status_code.HTTP_401_UNAUTHORIZED)
+        return self.destroy(request, *args, **kwargs)    
+
+#Sports List API end point class
+class SportsList(
+    generics.ListAPIView,
+    generics.RetrieveAPIView,
+    ):
+    queryset = Sport.objects.all()
+    lookup_field='id'
+    filterset_fields = ['id', 'name']
+    serializer_class = SportSerializer
+    def get(self,request, *args, **kwargs):
+        if kwargs.get('id'):
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+
+#Employee List API end point class.
+class EmployeesList(generics.ListAPIView,
+    generics.RetrieveAPIView,
+    generics.CreateAPIView,
+    generics.DestroyAPIView,
+    generics.UpdateAPIView):
+    queryset=Employee.objects.all()
+    lookup_field="id"
+    filterset_fields=['id', 'user', 'location']
+    serializer_class=EmployeeSerializer
+    def get(self, request, *args, **kwargs):
+        if request.user.type=='employee':
+            self.serializer_class=EmployeeSerializerOn
+            if kwargs.get('id'):
+                if request.user.id==self.get_object().user.id:   
+                    self.serializer_class=EmployeeSerializerGet
+                return self.retrieve(request, args, kwargs)
+            return self.list(request, args, kwargs)
+        
+        self.serializer_class=EmployeeSerializerGet
+        if kwargs.get('id'):
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+
+#Agents List API end point class
+class AgentsList(generics.ListAPIView,
+    generics.RetrieveAPIView,
+    generics.CreateAPIView,
+    generics.DestroyAPIView,
+    generics.UpdateAPIView):
+    queryset=Agent.objects.all()
+    lookup_field="id"
+    filterset_fields=['id', 'user']
+    serializer_class=AgentSerializerCreationAdmin
+    def get(self, request, *args, **kwargs):
+        if request.user.is_admin==False:
+            self.serializer_class=AgentSerializerGetPublic
+        else:
+            self.serializer_class=AgentSerializerGetAdmin
+        if kwargs.get('id'):
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+    def post(self, request, *args, **kwargs):
+        try:
+            user=User.objects.get(id=request.data['user'])
+            if user.type!='agent' or user.type!='client':
+                return Response(data={'detail':'Invalid user chosen, users cannot be admin or staff members'}, status=status_code.HTTP_400_BAD_REQUEST)
+        except:
+            pass
+        if request.user.is_admin==False:
+            self.serializer_class=AgentSerializerCreationStaff
+        return self.create(request, args, kwargs)
+
+#Picks List API end Point.
+class PicksList(generics.ListAPIView,
+    generics.RetrieveAPIView,
+    generics.CreateAPIView,
+    generics.DestroyAPIView,
+    generics.UpdateAPIView):
+    #self.queryset=User.objects.filter(id=request.user.id)
+    queryset=Pick.objects.all()
+    lookup_field="id"
+    filterset_fields=['id', 'user', 'order', 'game', 'sport', 'bet_type']
+    serializer_class=PickSerializer
+    def get(self, request, *args, **kwargs):
+        if kwargs.get('id'):
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+    def post(self, request, *args, **kwargs):
+        self.serializer_class=PickSerializerPost
+        if request.data['user'] and request.data['order']:
+            try:
+                if request.data['user']!=Order.objects.get(id=request.data['order']).user.id:
+                    return Response(data={"detail":"Cannot create a pick for an order associated to another user"}, status=status_code.HTTP_400_BAD_REQUEST)
+            except:
+                    return Response(data={"detail":"Cannot find the order"}, status=status_code.HTTP_400_BAD_REQUEST)
+        return self.create(request, args, kwargs)
+    def put(self, request, *args, **kwargs):
+        self.serializer_class=PickSerializerPut
+        return self.update(request, args, kwargs)
+
+#Location List API end point class
+class LocationsList(generics.ListAPIView,
+    generics.RetrieveAPIView,
+    generics.CreateAPIView,
+    generics.DestroyAPIView,
+    generics.UpdateAPIView):
+    queryset=Location.objects.all()
+    lookup_field="id"
+    filterset_fields=['id', 'name', 'city']
+    serializer_class=LocationSerializer
+    def get(self, request, *args, **kwargs):#Admin is reserved all the permissions
+        if request.user.type!='admin':
+            self.serializer_class=LocationSerializerClients
+            if kwargs.get('id'):
+                return self.retrieve(request, args, kwargs)
+            return Response(data=list(self.get_queryset().values('id', 'name', 'street', 'city', 'country', 'phone')), status=status_code.HTTP_200_OK)
+        else:
+            self.serializer_class=LocationSerializerGetAdmin
+            if kwargs.get('id'):
+                return self.retrieve(request, args, kwargs)
+            return self.list(request, args, kwargs)
+
+#Bet Transactions loggs API end Point (List and Retrieve only)
+class BetTransactionList(generics.ListAPIView, generics.RetrieveAPIView):
+    serializer_class=BetTransactionSerializerGet
+    queryset=BetTransaction.objects.all()
+    lookup_field='id'
+    def get(self, request, *args, **kwargs):
+        if 'id' in kwargs:
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+	    
+#Agencies Credit API end point class (List Retrieve and creation by admin only)
+class CreditLocationList(generics.ListAPIView, generics.RetrieveAPIView, generics.CreateAPIView):
+    serializer_class=CreditLocationSerializerGet
+    queryset=CreditLocation.objects.all()
+    lookup_field='id'
+    def get(self, request, *args, **kwargs):
+        if 'id' in kwargs:
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+</div> 
+		
+		  
             <script>
               function linktogit(){
                 console.log("Opened the github.");
