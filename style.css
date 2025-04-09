@@ -60,6 +60,40 @@
   color: rgb(233, 20, 109);
   transition: 0.5s;
 }
+/*--------------  Experience Section -------------*/
+.experience{
+  background: blueviolet;
+  background-size: cover;
+  width: 100%;
+
+}
+.experience h3{
+  font-size: 4.4rem;
+  font-weight: 700;
+}
+.experience h6{
+  font-size: 1.4rem;
+  text-transform: uppercase;
+  line-height: 1;
+  width: 40%;;
+}
+.experience h3 small{
+  font-size: 3rem;
+}
+.experience .bt1{
+  height: 55px;
+  width: 138px;
+  background-color: rgb(233, 20, 109);
+  outline: none;
+  border: none;
+  font-weight: bold;
+  border-radius: 5px;
+}
+.experience .bt1:hover{
+  background-color: white;
+  color: rgb(233, 20, 109);
+  transition: 0.5s;
+}
 
 /*-------------  Projects Section  ------------*/
 .projects{
